@@ -111,14 +111,14 @@ SmartParkingProject/
 
    ```
    BACKEND_URL=http://localhost:3000
-   GEOAPIFY_API_KEY=f9dd012ebeeb4d8cbe9bcf1d54e40267
+   GEOAPIFY_API_KEY=your_geoapify_key
    ```
 
    Backend (`backend/.env`):
 
    ```
    PORT=3000
-   GEOAPIFY_API_KEY=f9dd012ebeeb4d8cbe9bcf1d54e40267
+   GEOAPIFY_API_KEY=your_geoapify_key
    OPENAI_API_KEY=your_openai_api_key_here
    NODE_ENV=development
    ```
