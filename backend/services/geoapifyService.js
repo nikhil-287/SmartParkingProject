@@ -32,7 +32,6 @@ class GeoapifyService {
         },
         timeout: 5000,
       });
-
       return this.formatParkingData(response.data.features);
     } catch (error) {
       console.warn('⚠️  Geoapify API error, using mock data:', error.message);
