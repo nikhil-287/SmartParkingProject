@@ -24,7 +24,8 @@ class AIController {
       let results = [];
       
       if (parsed.location) {
-        results = await geoapifyService.searchByAddress(parsed.location, parsed.limit);
+        const searchResult = await geoapifyService.searchByAddress(parsed.location, parsed.limit);
+        results = searchResult.results; // Extract results array from response
       } else {
         // Default to San Jose area
         results = await geoapifyService.searchParking(37.3352, -121.8811, parsed.maxDistance, parsed.limit);

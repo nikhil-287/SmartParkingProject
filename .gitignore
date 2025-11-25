@@ -43,3 +43,5 @@ backend/.env
 /ios
 /android
 
+
+backend/.env

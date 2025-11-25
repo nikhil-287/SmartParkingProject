@@ -80,12 +80,16 @@ class ParkingController {
       }
 
       const resultLimit = limit ? parseInt(limit) : 20;
-      const results = await geoapifyService.searchByAddress(address, resultLimit);
+      const result = await geoapifyService.searchByAddress(address, resultLimit);
+
+      console.log('📍 Geocoded coordinates:', result.coordinates);
+      console.log('✅ Found', result.results.length, 'parking spots');
 
       res.json({
         success: true,
-        count: results.length,
-        data: results,
+        count: result.results.length,
+        data: result.results,
+        coordinates: result.coordinates, // Include geocoded coordinates
       });
     } catch (error) {
       console.error('Address search error:', error);

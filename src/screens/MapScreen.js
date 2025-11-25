@@ -23,7 +23,7 @@ import parkingService from '../services/parkingService';
 
 const MapScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { parkingSpots, filteredSpots, selectedParking, loading } = useSelector((state) => state.parking);
+  const { parkingSpots, filteredSpots, selectedParking, loading, searchLocation } = useSelector((state) => state.parking);
   const { favorites, recentSearches, userLocation } = useSelector((state) => state.user);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +35,24 @@ const MapScreen = ({ navigation }) => {
     getCurrentLocation();
     performInitialSearch();
   }, []);
+
+  // Animate map to searched location
+  useEffect(() => {
+    console.log('🗺️ searchLocation changed:', searchLocation);
+    console.log('🗺️ mapRef available:', !!mapRef);
+    
+    if (searchLocation && mapRef) {
+      const newRegion = {
+        latitude: searchLocation.latitude,
+        longitude: searchLocation.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      };
+      console.log('🎯 Animating map to:', newRegion);
+      setRegion(newRegion);
+      mapRef.animateToRegion(newRegion, 1000);
+    }
+  }, [searchLocation, mapRef]);
 
   const getCurrentLocation = async () => {
     const location = await locationService.getCurrentLocation();
@@ -76,6 +94,7 @@ const MapScreen = ({ navigation }) => {
       return;
     }
     
+    console.log('🔍 Searching for address:', searchQuery);
     dispatch(addRecentSearch(searchQuery));
     dispatch(searchByAddress({ address: searchQuery, limit: 20 }));
   };

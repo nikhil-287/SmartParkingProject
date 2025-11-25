@@ -1,11 +1,10 @@
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const config = require('../config/config');
 
 class AIService {
   constructor() {
-    this.openai = config.openaiApiKey ? new OpenAI({
-      apiKey: config.openaiApiKey,
-    }) : null;
+    this.genAI = config.geminiApiKey ? new GoogleGenerativeAI(config.geminiApiKey) : null;
+    this.model = this.genAI ? this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }) : null;
   }
 
   /**
@@ -13,42 +12,40 @@ class AIService {
    * @param {string} query - User's natural language query
    */
   async parseQuery(query) {
-    if (!this.openai) {
-      console.warn('⚠️  OpenAI not configured, using fallback parser');
+    if (!this.model) {
+      console.warn('⚠️  Gemini not configured, using fallback parser');
       return this.fallbackParser(query);
     }
 
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a parking search assistant. Parse user queries into structured JSON.
-            Extract: location (address/place), price preference (cheap/moderate/expensive), 
-            features (overnight, safe/secure, covered, EV charging, disabled access),
-            distance preference, and any other constraints.
-            
-            Return ONLY valid JSON in this format:
-            {
-              "location": "string or null",
-              "pricePreference": "cheap|moderate|expensive|any",
-              "features": ["feature1", "feature2"],
-              "maxDistance": number in meters or null,
-              "sortBy": "price|distance|availability|safety",
-              "limit": number (default 20)
-            }`,
-          },
-          {
-            role: 'user',
-            content: query,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 300,
-      });
+      const prompt = `You are a parking search assistant. Parse user queries into structured JSON.
+Extract: location (address/place), price preference (cheap/moderate/expensive), 
+features (overnight, safe/secure, covered, EV charging, disabled access),
+distance preference, and any other constraints.
 
-      const parsed = JSON.parse(completion.choices[0].message.content);
+Return ONLY valid JSON in this format:
+{
+  "location": "string or null",
+  "pricePreference": "cheap|moderate|expensive|any",
+  "features": ["feature1", "feature2"],
+  "maxDistance": number in meters or null,
+  "sortBy": "price|distance|availability|safety",
+  "limit": number (default 20)
+}
+
+User query: "${query}"`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Extract JSON from response (Gemini sometimes adds markdown)
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON in response');
+      }
+      
+      const parsed = JSON.parse(jsonMatch[0]);
       return this.validateParsedQuery(parsed);
     } catch (error) {
       console.error('AI parsing error:', error.message);
@@ -142,29 +139,23 @@ class AIService {
    * Generate AI response message
    */
   async generateResponse(query, results) {
-    if (!this.openai || results.length === 0) {
+    if (!this.model || results.length === 0) {
       return this.fallbackResponse(results);
     }
 
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful parking assistant. Provide brief, friendly summaries of parking search results.',
-          },
-          {
-            role: 'user',
-            content: `User asked: "${query}"\nFound ${results.length} parking spots. Summarize the top options briefly.`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 150,
-      });
+      const prompt = `You are a helpful parking assistant. Provide brief, friendly summaries of parking search results.
 
-      return completion.choices[0].message.content;
+User asked: "${query}"
+Found ${results.length} parking spots.
+
+Provide a brief, friendly summary (2-3 sentences max) about the top parking options.`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
     } catch (error) {
+      console.error('Response generation error:', error.message);
       return this.fallbackResponse(results);
     }
   }

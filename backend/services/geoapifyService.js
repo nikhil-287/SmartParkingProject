@@ -87,10 +87,19 @@ class GeoapifyService {
       }
 
       const { lat, lon } = geocodeResponse.data.features[0].properties;
-      return await this.searchParking(lat, lon, 5000, limit);
+      const parkingResults = await this.searchParking(lat, lon, 5000, limit);
+      
+      // Return both the coordinates and parking results
+      return {
+        coordinates: { latitude: lat, longitude: lon },
+        results: parkingResults
+      };
     } catch (error) {
       console.warn('⚠️  Address search error, using mock data:', error.message);
-      return this.formatParkingData(mockParkingData);
+      return {
+        coordinates: null,
+        results: this.formatParkingData(mockParkingData)
+      };
     }
   }
 

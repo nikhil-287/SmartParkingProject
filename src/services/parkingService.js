@@ -47,7 +47,10 @@ class ParkingService {
       const response = await axios.get(`${API_URL}/search-by-address`, {
         params: { address, limit },
       });
-      return this.mapBackendData(response.data.data);
+      return {
+        results: this.mapBackendData(response.data.data),
+        coordinates: response.data.coordinates // Include geocoded coordinates
+      };
     } catch (error) {
       console.error('Address search error:', error);
       throw new Error(error.response?.data?.message || 'Failed to search by address');

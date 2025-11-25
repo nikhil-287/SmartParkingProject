@@ -113,8 +113,9 @@ const parkingSlice = createSlice({
       })
       .addCase(searchByAddress.fulfilled, (state, action) => {
         state.loading = false;
-        state.parkingSpots = action.payload;
-        state.filteredSpots = action.payload;
+        state.parkingSpots = action.payload.results;
+        state.filteredSpots = action.payload.results;
+        state.searchLocation = action.payload.coordinates; // Store the searched location
       })
       .addCase(searchByAddress.rejected, (state, action) => {
         state.loading = false;
