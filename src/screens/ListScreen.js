@@ -14,7 +14,7 @@ import { colors, spacing } from '../constants/theme';
 import SearchBar from '../components/SearchBar';
 import ParkingCard from '../components/ParkingCard';
 import FilterPanel from '../components/FilterPanel';
-import { searchParking, searchByAddress } from '../store/slices/parkingSlice';
+import { searchParking, searchByAddress, searchByBbox } from '../store/slices/parkingSlice';
 import { addFavorite, removeFavorite, addRecentSearch } from '../store/slices/userSlice';
 import locationService from '../services/locationService';
 import parkingService from '../services/parkingService';
@@ -34,12 +34,17 @@ const ListScreen = ({ navigation }) => {
 
   const loadInitialData = async () => {
     const location = await locationService.getCurrentLocation();
-    dispatch(searchParking({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      radius: 5000,
-      limit: 20,
-    }));
+    
+    // Calculate bounding box from current location with 5km radius
+    const radiusInDegrees = 5000 / 111320; // 5000 meters to degrees
+    const bbox = [
+      location.longitude - radiusInDegrees, // lon1 (west)
+      location.latitude - radiusInDegrees,  // lat1 (south)
+      location.longitude + radiusInDegrees, // lon2 (east)
+      location.latitude + radiusInDegrees   // lat2 (north)
+    ];
+    
+    dispatch(searchByBbox({ bbox, limit: 20 }));
   };
 
   const handleSearch = () => {
@@ -88,46 +93,46 @@ const ListScreen = ({ navigation }) => {
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        onSearch={handleSearch}
-        onClear={() => setSearchQuery('')}
-        placeholder="Search location..."
-        recentSearches={recentSearches}
-        onSelectRecent={(query) => {
-          setSearchQuery(query);
-          dispatch(searchByAddress({ address: query, limit: 20 }));
-        }}
-        showRecent={true}
-      />
+    <View style={styles.headerActions}>
+      <TouchableOpacity 
+        style={styles.filterButton} 
+        onPress={() => setFilterVisible(true)}
+      >
+        <Ionicons name="options-outline" size={20} color={colors.background} />
+        <Text style={styles.filterButtonText}>Filters</Text>
+        {filteredSpots.length !== parkingSpots.length && (
+          <View style={styles.filterBadge}>
+            <Text style={styles.filterBadgeText}>{filteredSpots.length}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
-      <View style={styles.headerActions}>
-        <TouchableOpacity 
-          style={styles.filterButton} 
-          onPress={() => setFilterVisible(true)}
-        >
-          <Ionicons name="options-outline" size={20} color={colors.background} />
-          <Text style={styles.filterButtonText}>Filters</Text>
-          {filteredSpots.length !== parkingSpots.length && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{filteredSpots.length}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.sortInfo}>
-          <Text style={styles.sortText}>
-            {spotsWithDistance.length} spot{spotsWithDistance.length !== 1 ? 's' : ''} found
-          </Text>
-        </View>
+      <View style={styles.sortInfo}>
+        <Text style={styles.sortText}>
+          {spotsWithDistance.length} spot{spotsWithDistance.length !== 1 ? 's' : ''} found
+        </Text>
       </View>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSearch={handleSearch}
+          onClear={() => setSearchQuery('')}
+          placeholder="Search location..."
+          recentSearches={recentSearches}
+          onSelectRecent={(query) => {
+            setSearchQuery(query);
+            dispatch(searchByAddress({ address: query, limit: 20 }));
+          }}
+          showRecent={true}
+        />
+      </View>
+
       <FlatList
         data={spotsWithDistance}
         keyExtractor={(item) => item.id}

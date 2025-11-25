@@ -1,5 +1,5 @@
 // API Configuration
-export const BACKEND_URL = 'http://192.168.5.80:3000';
+export const BACKEND_URL = 'http://10.0.0.226:3000';
 
 // Default search settings
 export const DEFAULT_RADIUS = 5000; // meters
