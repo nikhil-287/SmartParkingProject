@@ -9,13 +9,33 @@ class ParkingService {
    */
   async searchByCoordinates(latitude, longitude, radius = 5000, limit = 20) {
     try {
-      const response = await axios.get(`${API_URL}/search`, {
-        params: { lat: latitude, lon: longitude, radius, limit },
-      });
-      return response.data.data;
+      const url = `${API_URL}/search`;
+      const params = { lat: latitude, lon: longitude, radius, limit };
+      console.log('Parking search request:', url, params);
+      const response = await axios.get(url, { params });
+      return this.mapBackendData(response.data.data);
     } catch (error) {
       console.error('Parking search error:', error);
       throw new Error(error.response?.data?.message || 'Failed to search parking');
+    }
+  }
+
+  /**
+   * Search parking by bounding box (Geoapify format)
+   * @param {Array} bbox - [lon1, lat1, lon2, lat2]
+   * @param {number} limit - Maximum results
+   */
+  async searchByBbox(bbox, limit = 20) {
+    try {
+      const bboxString = bbox.join(',');
+      const url = `${API_URL}/search`;
+      const params = { bbox: bboxString, limit };
+      console.log('Parking bbox search request:', url, params);
+      const response = await axios.get(url, { params });
+      return this.mapBackendData(response.data.data);
+    } catch (error) {
+      console.error('Bbox search error:', error);
+      throw new Error(error.response?.data?.message || 'Failed to search by bounding box');
     }
   }
 
@@ -27,7 +47,7 @@ class ParkingService {
       const response = await axios.get(`${API_URL}/search-by-address`, {
         params: { address, limit },
       });
-      return response.data.data;
+      return this.mapBackendData(response.data.data);
     } catch (error) {
       console.error('Address search error:', error);
       throw new Error(error.response?.data?.message || 'Failed to search by address');
@@ -56,11 +76,79 @@ class ParkingService {
         results,
         filters,
       });
-      return response.data.data;
+      return this.mapBackendData(response.data.data);
     } catch (error) {
       console.error('Filter error:', error);
       throw new Error(error.response?.data?.message || 'Failed to filter parking');
     }
+  }
+
+  /**
+   * Search parking for a map region
+   * @param {Object} region - Map region with latitude, longitude, latitudeDelta, longitudeDelta
+   * @param {number} limit - Maximum results
+   */
+  async searchByRegion(region, limit = 20) {
+    const { latitude, longitude, latitudeDelta, longitudeDelta } = region;
+    
+    // Convert region to bounding box
+    const bbox = [
+      longitude - longitudeDelta / 2, // lon1 (west)
+      latitude - latitudeDelta / 2,   // lat1 (south)
+      longitude + longitudeDelta / 2, // lon2 (east)
+      latitude + latitudeDelta / 2    // lat2 (north)
+    ];
+    
+    return this.searchByBbox(bbox, limit);
+  }
+
+  /**
+   * Map backend data structure to frontend expected format
+   */
+  mapBackendData(backendData) {
+    if (!Array.isArray(backendData)) {
+      return [];
+    }
+
+    return backendData.map((item) => ({
+      id: item.id,
+      name: item.name,
+      address: item.address,
+      coordinates: {
+        latitude: item.coordinates.latitude,
+        longitude: item.coordinates.longitude,
+      },
+      // Map availability field (backend uses different field names)
+      availability: item.availability || item.availableSpots || 0,
+      capacity: item.capacity || 0,
+      // Ensure pricing structure is consistent
+      pricing: {
+        hourly: parseFloat(item.pricing?.hourly || 0),
+        daily: parseFloat(item.pricing?.daily || 0), 
+        monthly: parseFloat(item.pricing?.monthly || 0),
+        currency: item.pricing?.currency || 'USD',
+      },
+      // Map features (handle both naming conventions)
+      features: {
+        covered: item.features?.covered || false,
+        security: item.features?.security || false,
+        evCharging: item.features?.ev_charging || item.features?.evCharging || false,
+        disabledAccess: item.features?.disabled_access || item.features?.disabledAccess || false,
+        '24hour': item.features?.['24hour'] || false,
+        bikePark: item.features?.bike_parking || item.features?.bikePark || false,
+      },
+      safetyRating: {
+        score: parseFloat(item.safetyRating?.score || 3.5),
+        reviews: item.safetyRating?.reviews || 0,
+        lighting: item.safetyRating?.lighting || false,
+        cameras: item.safetyRating?.security_cameras || item.safetyRating?.cameras || false,
+        patrol: item.safetyRating?.security_patrol || item.safetyRating?.patrol || false,
+      },
+      type: item.type || 'surface',
+      access: item.access || 'public',
+      distance: parseFloat(item.distance || 0),
+      fee: item.fee !== false,
+    }));
   }
 
   /**

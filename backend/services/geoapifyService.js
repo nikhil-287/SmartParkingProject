@@ -9,7 +9,7 @@ class GeoapifyService {
   }
 
   /**
-   * Search for parking near coordinates
+   * Search for parking near coordinates using bounding box
    * @param {number} lat - Latitude
    * @param {number} lon - Longitude
    * @param {number} radius - Search radius in meters (default: 5000)
@@ -18,23 +18,52 @@ class GeoapifyService {
   async searchParking(lat, lon, radius = 5000, limit = 20) {
     try {
       // Calculate bounding box from center point and radius
-      const latDiff = radius / 111000; // 1 degree lat ≈ 111km
-      const lonDiff = radius / (111000 * Math.cos((lat * Math.PI) / 180));
+      // 1 degree ≈ 111,320 meters at equator
+      const radiusInDegrees = radius / 111320;
+      
+      // Create bounding box: lon1,lat1,lon2,lat2
+      const bbox = [
+        lon - radiusInDegrees, // lon1 (west)
+        lat - radiusInDegrees, // lat1 (south)  
+        lon + radiusInDegrees, // lon2 (east)
+        lat + radiusInDegrees  // lat2 (north)
+      ];
 
-      const rect = `${lon - lonDiff},${lat - latDiff},${lon + lonDiff},${lat + latDiff}`;
+      return await this.searchParkingByBbox(bbox, limit);
+    } catch (error) {
+      console.warn('⚠️  Geoapify API error, using mock data:', error.message);
+      return this.formatParkingData(mockParkingData);
+    }
+  }
+
+  /**
+   * Search parking using bounding box (Geoapify format)
+   * @param {Array} bbox - [lon1, lat1, lon2, lat2]
+   * @param {number} limit - Max results
+   */
+  async searchParkingByBbox(bbox, limit = 20) {
+    try {
+      const [lon1, lat1, lon2, lat2] = bbox;
+      const rectFilter = `rect:${lon1},${lat1},${lon2},${lat2}`;
+
+      console.log('🔍 Searching parking with filter:', rectFilter);
 
       const response = await axios.get(this.baseUrl, {
         params: {
           categories: 'parking.cars',
-          filter: `rect:${rect}`,
+          filter: rectFilter,
           limit: limit,
           apiKey: this.apiKey,
         },
-        timeout: 5000,
+        timeout: 10000,
       });
-      return this.formatParkingData(response.data.features);
+
+      console.log('✅ Geoapify response:', response.data.features?.length, 'results');
+      return this.formatParkingData(response.data.features || []);
     } catch (error) {
       console.warn('⚠️  Geoapify API error, using mock data:', error.message);
+      const centerLat = (bbox[1] + bbox[3]) / 2;
+      const centerLon = (bbox[0] + bbox[2]) / 2;
       return this.formatParkingData(mockParkingData);
     }
   }

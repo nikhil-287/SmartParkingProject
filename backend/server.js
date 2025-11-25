@@ -13,6 +13,14 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.url}`);
+  console.log('Query params:', req.query);
+  console.log('Body:', req.body);
+  next();
+});
+
 // Routes
 app.use('/api/parking', parkingRoutes);
 app.use('/api/ai', aiRoutes);

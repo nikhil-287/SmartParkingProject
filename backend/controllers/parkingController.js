@@ -2,30 +2,54 @@ const geoapifyService = require('../services/geoapifyService');
 
 class ParkingController {
   /**
-   * Search parking by coordinates
+   * Search parking by coordinates (bounding box)
    * GET /api/parking/search?lat=37.3352&lon=-121.8811&radius=5000&limit=20
+   * OR
+   * GET /api/parking/search?bbox=-121.96,-121.87,37.39,37.45&limit=20
    */
   async searchByCoordinates(req, res) {
     try {
-      const { lat, lon, radius, limit } = req.query;
+      const { lat, lon, radius, bbox, limit } = req.query;
+      console.log('🔍 Parking search request:', { lat, lon, radius, bbox, limit });
 
-      if (!lat || !lon) {
+      let boundingBox;
+      const resultLimit = limit ? parseInt(limit) : 20;
+
+      if (bbox) {
+        // Direct bounding box: lon1,lat1,lon2,lat2
+        boundingBox = bbox.split(',').map(coord => parseFloat(coord));
+        console.log('📦 Received bbox:', bbox);
+        if (boundingBox.length !== 4) {
+          return res.status(400).json({
+        error: 'Invalid bbox format. Expected: lon1,lat1,lon2,lat2',
+          });
+        }
+      } else if (lat && lon) {
+        // Convert center point + radius to bounding box
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        const searchRadius = radius ? parseInt(radius) : 5000;
+        
+        // Convert radius (meters) to degrees (approximate)
+        const radiusInDegrees = searchRadius / 111320; // 1 degree ≈ 111,320 meters
+        boundingBox = [
+          longitude - radiusInDegrees, // lon1
+          latitude - radiusInDegrees,  // lat1
+          longitude + radiusInDegrees, // lon2
+          latitude + radiusInDegrees   // lat2
+        ];
+      } else {
         return res.status(400).json({
-          error: 'Missing required parameters: lat and lon',
+          error: 'Missing required parameters: (lat and lon) or bbox',
         });
       }
 
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
-      const searchRadius = radius ? parseInt(radius) : 5000;
-      const resultLimit = limit ? parseInt(limit) : 20;
-
-      const results = await geoapifyService.searchParking(
-        latitude,
-        longitude,
-        searchRadius,
+      console.log('📍 Using bounding box:', boundingBox);
+      const results = await geoapifyService.searchParkingByBbox(
+        boundingBox,
         resultLimit
       );
+      console.log('✅ Found', results.length, 'parking spots');
 
       res.json({
         success: true,

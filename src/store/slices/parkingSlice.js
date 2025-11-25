@@ -26,6 +26,18 @@ export const searchByAddress = createAsyncThunk(
   }
 );
 
+export const searchByBbox = createAsyncThunk(
+  'parking/searchByBbox',
+  async ({ bbox, limit }, { rejectWithValue }) => {
+    try {
+      const data = await parkingService.searchByBbox(bbox, limit);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const filterParking = createAsyncThunk(
   'parking/filter',
   async ({ results, filters }, { rejectWithValue }) => {
@@ -105,6 +117,20 @@ const parkingSlice = createSlice({
         state.filteredSpots = action.payload;
       })
       .addCase(searchByAddress.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Search by bounding box
+      .addCase(searchByBbox.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchByBbox.fulfilled, (state, action) => {
+        state.loading = false;
+        state.parkingSpots = action.payload;
+        state.filteredSpots = action.payload;
+      })
+      .addCase(searchByBbox.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

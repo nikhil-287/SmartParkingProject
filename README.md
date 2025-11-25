@@ -383,3 +383,6 @@ This project is for educational purposes (SJSU CMPE 277 project).
 ---
 
 **Need Help?** Check the troubleshooting section or review the API documentation in the backend code.
+
+update config jsj with backend url if running on this mac run: ipconfig getifaddr en0 || ipconfig getifaddr en1
+to get the ipaddress and replace in config.js

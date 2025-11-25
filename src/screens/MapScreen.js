@@ -15,7 +15,7 @@ import { DEFAULT_LOCATION, MAP_SETTINGS } from '../constants/config';
 import SearchBar from '../components/SearchBar';
 import FilterPanel from '../components/FilterPanel';
 import ParkingCard from '../components/ParkingCard';
-import { searchParking, searchByAddress, setSelectedParking } from '../store/slices/parkingSlice';
+import { searchParking, searchByAddress, searchByBbox, setSelectedParking } from '../store/slices/parkingSlice';
 import { addFavorite, removeFavorite, setUserLocation, addRecentSearch } from '../store/slices/userSlice';
 import locationService from '../services/locationService';
 import parkingService from '../services/parkingService';
@@ -47,12 +47,26 @@ const MapScreen = ({ navigation }) => {
 
   const performInitialSearch = async () => {
     const location = await locationService.getCurrentLocation();
-    dispatch(searchParking({
+    const region = {
       latitude: location.latitude,
       longitude: location.longitude,
-      radius: 5000,
-      limit: 20,
-    }));
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    };
+    searchParkingByRegion(region);
+  };
+
+  const searchParkingByRegion = (region) => {
+    // Calculate bounding box from map region
+    const bbox = [
+      region.longitude - region.longitudeDelta / 2, // lon1 (west)
+      region.latitude - region.latitudeDelta / 2,   // lat1 (south)
+      region.longitude + region.longitudeDelta / 2, // lon2 (east)
+      region.latitude + region.latitudeDelta / 2    // lat2 (north)
+    ];
+    
+    console.log('📍 Map region bbox:', bbox);
+    dispatch(searchByBbox({ bbox, limit: 20 }));
   };
 
   const handleSearch = () => {
@@ -67,23 +81,15 @@ const MapScreen = ({ navigation }) => {
 
   const handleMyLocation = async () => {
     const location = await locationService.getCurrentLocation();
-    setRegion({
+    const newRegion = {
       ...location,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
-    });
-    mapRef?.animateToRegion({
-      ...location,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
+    };
     
-    dispatch(searchParking({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      radius: 5000,
-      limit: 20,
-    }));
+    setRegion(newRegion);
+    mapRef?.animateToRegion(newRegion);
+    searchParkingByRegion(newRegion);
   };
 
   const handleMarkerPress = (parking) => {
@@ -122,6 +128,14 @@ const MapScreen = ({ navigation }) => {
     ? parkingService.addDistanceToResults(displayedSpots, userLocation.latitude, userLocation.longitude)
     : displayedSpots;
 
+  // Handle map region change to search visible area
+  const handleRegionChangeComplete = (newRegion) => {
+    // Update region state
+    setRegion(newRegion);
+    // Search parking in the new visible area
+    searchParkingByRegion(newRegion);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -132,6 +146,7 @@ const MapScreen = ({ navigation }) => {
         showsUserLocation={true}
         showsMyLocationButton={false}
         showsCompass={true}
+        onRegionChangeComplete={handleRegionChangeComplete}
       >
         {spotsWithDistance.map((parking) => (
           <Marker
