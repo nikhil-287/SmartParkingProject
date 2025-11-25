@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../constants/theme';
@@ -126,7 +127,7 @@ const ListScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <FlatList
         data={spotsWithDistance}
         keyExtractor={(item) => item.id}
@@ -159,7 +160,7 @@ const ListScreen = ({ navigation }) => {
           console.log('Filters applied:', filters);
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

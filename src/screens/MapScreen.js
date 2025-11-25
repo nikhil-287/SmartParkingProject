@@ -7,6 +7,7 @@ import {
   Text,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
@@ -137,7 +138,7 @@ const MapScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <MapView
         ref={setMapRef}
         style={styles.map}
@@ -233,20 +234,21 @@ const MapScreen = ({ navigation }) => {
           Found {spotsWithDistance.length} parking spots
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   map: {
     flex: 1,
   },
   topControls: {
     position: 'absolute',
-    top: 0,
+    top: spacing.large,
     left: 0,
     right: 0,
     paddingTop: spacing.large,

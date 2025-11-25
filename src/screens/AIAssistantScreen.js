@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '../constants/theme';
@@ -120,62 +121,68 @@ const AIAssistantScreen = ({ navigation }) => {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <View style={styles.header}>
-        <View style={styles.aiHeaderIcon}>
-          <Ionicons name="sparkles" size={24} color={colors.secondary} />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <View style={styles.header}>
+          <View style={styles.aiHeaderIcon}>
+            <Ionicons name="sparkles" size={24} color={colors.secondary} />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>AI Assistant</Text>
+            <Text style={styles.headerSubtitle}>Natural language parking search</Text>
+          </View>
         </View>
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>AI Assistant</Text>
-          <Text style={styles.headerSubtitle}>Natural language parking search</Text>
-        </View>
-      </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={chatHistory}
-        keyExtractor={(item, index) => `message-${index}`}
-        renderItem={renderMessage}
-        contentContainerStyle={styles.chatContent}
-        ListEmptyComponent={renderEmpty}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-        showsVerticalScrollIndicator={false}
-      />
+        <FlatList
+          ref={flatListRef}
+          data={chatHistory}
+          keyExtractor={(item, index) => `message-${index}`}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.chatContent}
+          ListEmptyComponent={renderEmpty}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+          showsVerticalScrollIndicator={false}
+        />
 
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Ask about parking..."
-            placeholderTextColor={colors.textSecondary}
-            multiline
-            maxLength={500}
-          />
-          
-          <TouchableOpacity
-            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color={colors.background} />
-            ) : (
-              <Ionicons name="send" size={20} color={colors.background} />
-            )}
-          </TouchableOpacity>
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Ask about parking..."
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              maxLength={500}
+            />
+            
+            <TouchableOpacity
+              style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.background} />
+              ) : (
+                <Ionicons name="send" size={20} color={colors.background} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.backgroundSecondary,
