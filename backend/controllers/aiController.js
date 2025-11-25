@@ -5,11 +5,11 @@ class AIController {
   /**
    * Parse natural language query
    * POST /api/ai/query
-   * Body: { query: "Find me the cheapest parking near SJSU" }
+   * Body: { query: "Find me the cheapest parking near SJSU", sessionId: "optional-unique-id" }
    */
   async processQuery(req, res) {
     try {
-      const { query } = req.body;
+      const { query, sessionId } = req.body;
 
       if (!query) {
         return res.status(400).json({
@@ -17,18 +17,100 @@ class AIController {
         });
       }
 
+      console.log('🤖 Processing query:', query);
+      console.log('📝 Session ID:', sessionId || 'none');
+
+      // Get conversation context
+      const context = sessionId ? aiService.getConversationContext(sessionId) : null;
+      console.log('💬 Context found:', context ? 'yes' : 'no');
+
+      // Classify if this is a new search or follow-up question
+      const classification = await aiService.classifyQuery(query, context);
+      console.log('🔍 Query classification:', classification);
+
+      // Handle follow-up questions
+      if (classification.type === 'follow_up' && context && context.lastResults) {
+        console.log('💭 Handling as follow-up question');
+        const followUpResponse = await aiService.answerFollowUpQuestion(
+          query,
+          context.lastResults,
+          context
+        );
+
+        // Update context with the new interaction
+        if (sessionId) {
+          aiService.setConversationContext(sessionId, {
+            lastQuery: query,
+            lastResults: followUpResponse.results,
+            lastResponse: followUpResponse.answer,
+            searchLocation: context.searchLocation
+          });
+        }
+
+        return res.json({
+          success: true,
+          type: 'follow_up',
+          query: query,
+          aiResponse: followUpResponse.answer,
+          count: followUpResponse.results.length,
+          data: followUpResponse.results
+        });
+      }
+
+      // Handle refinement of existing results
+      if (classification.type === 'refine' && context && context.lastResults) {
+        console.log('🔧 Handling as refinement');
+        
+        // Re-parse the query for new filters
+        const parsed = await aiService.parseQuery(query);
+        console.log('Parsed refinement params:', parsed);
+
+        // Apply new filters to existing results
+        let refinedResults = this.applyFilters(context.lastResults, parsed);
+        refinedResults = this.sortResults(refinedResults, parsed.sortBy);
+
+        // Generate friendly response
+        const aiResponse = await aiService.generateResponse(query, refinedResults);
+
+        // Update context
+        if (sessionId) {
+          aiService.setConversationContext(sessionId, {
+            lastQuery: query,
+            lastResults: refinedResults,
+            lastResponse: aiResponse,
+            searchLocation: context.searchLocation
+          });
+        }
+
+        return res.json({
+          success: true,
+          type: 'refine',
+          query: query,
+          parsed: parsed,
+          aiResponse: aiResponse,
+          count: refinedResults.length,
+          data: refinedResults
+        });
+      }
+
+      // Handle new search
+      console.log('🆕 Handling as new search');
+
       // Parse the query using AI
       const parsed = await aiService.parseQuery(query);
 
       // Search for parking based on parsed parameters
       let results = [];
+      let coordinates = null;
       
       if (parsed.location) {
         const searchResult = await geoapifyService.searchByAddress(parsed.location, parsed.limit);
-        results = searchResult.results; // Extract results array from response
+        results = searchResult.results;
+        coordinates = searchResult.coordinates;
       } else {
         // Default to San Jose area
         results = await geoapifyService.searchParking(37.3352, -121.8811, parsed.maxDistance, parsed.limit);
+        coordinates = { latitude: 37.3352, longitude: -121.8811 };
       }
 
       // Apply filters based on AI parsed preferences
@@ -40,13 +122,25 @@ class AIController {
       // Generate AI response
       const aiResponse = await aiService.generateResponse(query, results);
 
+      // Store context for this session
+      if (sessionId) {
+        aiService.setConversationContext(sessionId, {
+          lastQuery: query,
+          lastResults: results,
+          lastResponse: aiResponse,
+          searchLocation: coordinates
+        });
+      }
+
       res.json({
         success: true,
+        type: 'new_search',
         query: query,
         parsed: parsed,
         aiResponse: aiResponse,
         count: results.length,
         data: results,
+        coordinates: coordinates
       });
     } catch (error) {
       console.error('AI query error:', error);

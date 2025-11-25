@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +18,7 @@ import { colors, spacing, borderRadius } from '../constants/theme';
 import { processAIQuery, getSuggestions } from '../store/slices/aiSlice';
 import ParkingCard from '../components/ParkingCard';
 import { addFavorite, removeFavorite } from '../store/slices/userSlice';
+import aiService from '../services/aiService';
 
 const AIAssistantScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -28,6 +30,25 @@ const AIAssistantScreen = ({ navigation }) => {
   useEffect(() => {
     dispatch(getSuggestions());
   }, []);
+
+  const handleNewConversation = () => {
+    Alert.alert(
+      'New Conversation',
+      'Start a fresh conversation? This will clear the current context.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start New',
+          style: 'destructive',
+          onPress: () => {
+            aiService.resetSession();
+            // You could also clear chat history here if you want
+            Alert.alert('✨ New Conversation Started', 'Previous context cleared. Ask me anything!');
+          },
+        },
+      ]
+    );
+  };
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -102,7 +123,7 @@ const AIAssistantScreen = ({ navigation }) => {
       </View>
       <Text style={styles.welcomeTitle}>AI Parking Assistant</Text>
       <Text style={styles.welcomeText}>
-        Ask me anything about parking! Try questions like:
+        Ask me anything about parking! I'll remember our conversation, so you can ask follow-up questions.
       </Text>
       
       <View style={styles.suggestionsContainer}>
@@ -133,8 +154,16 @@ const AIAssistantScreen = ({ navigation }) => {
           </View>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>AI Assistant</Text>
-            <Text style={styles.headerSubtitle}>Natural language parking search</Text>
+            <Text style={styles.headerSubtitle}>Conversational parking search</Text>
           </View>
+          {chatHistory.length > 0 && (
+            <TouchableOpacity 
+              style={styles.newChatButton}
+              onPress={handleNewConversation}
+            >
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <FlatList
@@ -154,7 +183,7 @@ const AIAssistantScreen = ({ navigation }) => {
               style={styles.input}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="Ask about parking..."
+              placeholder={chatHistory.length > 0 ? "Ask follow-up questions..." : "Ask about parking..."}
               placeholderTextColor={colors.textSecondary}
               multiline
               maxLength={500}
@@ -218,6 +247,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  newChatButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chatContent: {
     padding: spacing.medium,
@@ -366,6 +401,12 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: colors.textSecondary,
     opacity: 0.5,
+  },
+  newChatButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

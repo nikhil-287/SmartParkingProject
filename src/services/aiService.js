@@ -3,13 +3,49 @@ import { BACKEND_URL } from '../constants/config';
 
 const API_URL = `${BACKEND_URL}/api/ai`;
 
+// Generate unique session ID for conversation context
+const generateSessionId = () => {
+  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
 class AIService {
+  constructor() {
+    // Store current session ID for conversation context
+    this.sessionId = null;
+  }
+
+  /**
+   * Get or create session ID
+   */
+  getSessionId() {
+    if (!this.sessionId) {
+      this.sessionId = generateSessionId();
+    }
+    return this.sessionId;
+  }
+
+  /**
+   * Reset session (start new conversation)
+   */
+  resetSession() {
+    this.sessionId = generateSessionId();
+    console.log('🔄 New conversation started:', this.sessionId);
+    return this.sessionId;
+  }
+
   /**
    * Process natural language query
    */
   async processQuery(query) {
     try {
-      const response = await axios.post(`${API_URL}/query`, { query });
+      const response = await axios.post(`${API_URL}/query`, { 
+        query,
+        sessionId: this.getSessionId() // Include session ID for context
+      });
+      
+      // Log the response type for debugging
+      console.log('📨 Response type:', response.data.type);
+      
       return response.data;
     } catch (error) {
       console.error('AI query error:', error);
