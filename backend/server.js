@@ -5,6 +5,7 @@ const config = require('./config/config');
 
 const parkingRoutes = require('./routes/parkingRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/parking', parkingRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

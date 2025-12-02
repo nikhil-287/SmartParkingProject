@@ -1,7 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TouchableOpacity } from 'react-native';
 import { colors } from '../constants/theme';
 
 import MapScreen from '../screens/MapScreen';
@@ -12,6 +14,7 @@ import FavoritesScreen from '../screens/FavoritesScreen';
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   
   return (
@@ -46,13 +49,45 @@ const TabNavigator = () => {
           fontSize: 12,
           fontWeight: '600',
         },
-        headerShown: false,
+        headerShown: true,
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={{ marginRight: 15 }}
+          >
+            <Ionicons name="person-circle" size={28} color={colors.primary} />
+          </TouchableOpacity>
+        ),
       })}
     >
-      <Tab.Screen name="Map" component={MapScreen} />
-      <Tab.Screen name="List" component={ListScreen} />
-      <Tab.Screen name="AI Assistant" component={AIAssistantScreen} />
-      <Tab.Screen name="Favorites" component={FavoritesScreen} />
+      <Tab.Screen 
+        name="Map" 
+        component={MapScreen}
+        options={{
+          headerTitle: 'Smart Parking',
+        }}
+      />
+      <Tab.Screen 
+        name="List" 
+        component={ListScreen}
+        options={{
+          headerTitle: 'Parking List',
+        }}
+      />
+      <Tab.Screen 
+        name="AI Assistant" 
+        component={AIAssistantScreen}
+        options={{
+          headerTitle: 'AI Assistant',
+        }}
+      />
+      <Tab.Screen 
+        name="Favorites" 
+        component={FavoritesScreen}
+        options={{
+          headerTitle: 'My Favorites',
+        }}
+      />
     </Tab.Navigator>
   );
 };

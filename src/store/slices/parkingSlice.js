@@ -73,6 +73,11 @@ const parkingSlice = createSlice({
     setSelectedParking: (state, action) => {
       state.selectedParking = action.payload;
     },
+    // Set parking results directly (used by AI assistant to show results)
+    setParkingResults: (state, action) => {
+      state.parkingSpots = action.payload || [];
+      state.filteredSpots = action.payload || [];
+    },
     clearSelectedParking: (state) => {
       state.selectedParking = null;
     },
@@ -152,6 +157,7 @@ const parkingSlice = createSlice({
 
 export const {
   setSelectedParking,
+  setParkingResults,
   clearSelectedParking,
   setSearchLocation,
   setFilters,

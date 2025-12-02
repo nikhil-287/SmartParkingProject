@@ -34,13 +34,16 @@ class AIService {
   }
 
   /**
-   * Process natural language query
+   * Process natural language query with chat history for context
+   * @param {string} query - The user's query
+   * @param {Array} chatHistory - Full chat history for context
    */
-  async processQuery(query) {
+  async processQuery(query, chatHistory = []) {
     try {
       const response = await axios.post(`${API_URL}/query`, { 
         query,
-        sessionId: this.getSessionId() // Include session ID for context
+        sessionId: this.getSessionId(), // Include session ID for context
+        chatHistory // Pass full conversation history for context awareness
       });
       
       // Log the response type for debugging
