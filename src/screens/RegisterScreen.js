@@ -41,14 +41,21 @@ const RegisterScreen = ({ navigation }) => {
       // If email confirmation is enabled, session may be null. If session exists, sync immediately
       const accessToken = data?.session?.access_token;
       if (accessToken) {
-        const res = await authService.syncWithSupabase(accessToken);
-        if (res && res.success) {
-          dispatch(setAuthUser(res.user));
-          Alert.alert('Success', 'Account created and profile synced!');
+        // Call the new register-profile endpoint to save all profile data
+        const registerRes = await authService.registerProfileWithData(accessToken, {
+          firstName,
+          familyName,
+          phone,
+          fullName,
+        });
+
+        if (registerRes && registerRes.success) {
+          dispatch(setAuthUser(registerRes.user));
+          Alert.alert('Success', 'Account created and profile saved!');
           // Navigate to home after brief delay
           setTimeout(() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] }), 1000);
         } else {
-          Alert.alert('Sync failed', res?.error || 'Profile creation failed');
+          Alert.alert('Profile save failed', registerRes?.error || 'Profile creation failed');
         }
       } else {
         Alert.alert('Confirm Email', 'A confirmation email was sent. After confirming, sign in.');

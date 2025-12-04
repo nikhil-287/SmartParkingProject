@@ -44,6 +44,54 @@ class AuthController {
       return res.status(500).json({ error: 'Failed to sync profile', message: error.message });
     }
   }
+
+  /**
+   * Check if a profile exists in the database
+   */
+  async checkProfile(req, res) {
+    try {
+      const { userId } = req.params;
+      if (!userId) {
+        return res.status(400).json({ error: 'Missing userId' });
+      }
+
+      const result = await authService.checkProfileExists(userId);
+      return res.json(result);
+    } catch (error) {
+      console.error('Check profile error:', error.message);
+      return res.status(500).json({ error: 'Failed to check profile', message: error.message });
+    }
+  }
+
+  /**
+   * Register profile with user data after signup
+   * Expects: { accessToken, firstName, familyName, phone, fullName }
+   */
+  async registerProfile(req, res) {
+    try {
+      const { accessToken, firstName, familyName, phone, fullName } = req.body;
+      if (!accessToken) {
+        return res.status(400).json({ error: 'Missing accessToken in request body' });
+      }
+
+      const profile = await authService.registerProfile({
+        accessToken,
+        firstName,
+        familyName,
+        phone,
+        fullName,
+      });
+
+      if (!profile) {
+        return res.status(400).json({ error: 'Failed to register profile' });
+      }
+
+      return res.json({ success: true, user: profile });
+    } catch (error) {
+      console.error('Register profile error:', error.message);
+      return res.status(500).json({ error: 'Failed to register profile', message: error.message });
+    }
+  }
 }
 
 module.exports = new AuthController();

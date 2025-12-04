@@ -55,8 +55,8 @@ const LoginScreen = ({ navigation }) => {
       setLoadingGoogle(true);
       // Temporary workaround: use email/password login instead of OAuth
       // This bypasses the Google OAuth redirect URI issues during development
-      const testEmail = 'test@smartparking.app';
-      const testPassword = 'TestPassword123!';
+      const testEmail = 'abc@gmail.com';
+      const testPassword = '12345678';
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: testEmail,

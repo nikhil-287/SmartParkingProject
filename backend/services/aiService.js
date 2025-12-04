@@ -130,43 +130,90 @@ Answer:`;
    * Filter results based on follow-up question
    */
   filterResultsBasedOnQuestion(query, results) {
+    if (!results || results.length === 0) return results;
+    
     const lowerQuery = query.toLowerCase();
+    let filtered = [...results];
     
     // Cheapest
-    if (lowerQuery.includes('cheap') || lowerQuery.includes('lowest price') || lowerQuery.includes('most affordable')) {
-      return [...results].sort((a, b) => a.pricing.hourly - b.pricing.hourly).slice(0, 5);
+    if (lowerQuery.includes('cheap') || lowerQuery.includes('lowest price') || lowerQuery.includes('most affordable') || lowerQuery.includes('least expensive')) {
+      filtered = [...results].sort((a, b) => a.pricing.hourly - b.pricing.hourly).slice(0, 5);
+      console.log('Filtering by: cheapest');
+      return filtered;
     }
     
     // Most available
-    if (lowerQuery.includes('most available') || lowerQuery.includes('empty') || lowerQuery.includes('most space')) {
-      return [...results].sort((a, b) => b.availability - a.availability).slice(0, 5);
+    if (lowerQuery.includes('most available') || lowerQuery.includes('empty') || lowerQuery.includes('most space') || lowerQuery.includes('availability')) {
+      filtered = [...results].sort((a, b) => b.availability - a.availability).slice(0, 5);
+      console.log('Filtering by: most available');
+      return filtered;
     }
     
     // Safest
-    if (lowerQuery.includes('safe') || lowerQuery.includes('secure')) {
-      return [...results].sort((a, b) => b.safetyRating.score - a.safetyRating.score).slice(0, 5);
+    if (lowerQuery.includes('safe') || lowerQuery.includes('secure') || lowerQuery.includes('safer')) {
+      filtered = [...results].sort((a, b) => b.safetyRating.score - a.safetyRating.score).slice(0, 5);
+      console.log('Filtering by: safest');
+      return filtered;
     }
     
     // Closest
-    if (lowerQuery.includes('closest') || lowerQuery.includes('nearest')) {
-      return [...results].sort((a, b) => (a.distance || 999) - (b.distance || 999)).slice(0, 5);
+    if (lowerQuery.includes('closest') || lowerQuery.includes('nearest') || lowerQuery.includes('closest one')) {
+      filtered = [...results].sort((a, b) => (a.distance || 999) - (b.distance || 999)).slice(0, 5);
+      console.log('Filtering by: closest');
+      return filtered;
     }
     
-    // Covered
-    if (lowerQuery.includes('covered') || lowerQuery.includes('garage') || lowerQuery.includes('indoor')) {
-      return results.filter(p => p.features.covered);
+    // Covered/Garage/Indoor
+    if (lowerQuery.includes('covered') || lowerQuery.includes('garage') || lowerQuery.includes('indoor') || lowerQuery.includes('roofed')) {
+      filtered = results.filter(p => p.features && p.features.covered);
+      console.log('Filtering by: covered');
+      return filtered.length > 0 ? filtered : results;
     }
     
     // EV charging
-    if (lowerQuery.includes('ev') || lowerQuery.includes('electric') || lowerQuery.includes('charg')) {
-      return results.filter(p => p.features.ev_charging);
+    if (lowerQuery.includes('ev') || lowerQuery.includes('electric') || lowerQuery.includes('charging') || lowerQuery.includes('charger')) {
+      filtered = results.filter(p => p.features && p.features.ev_charging);
+      console.log('Filtering by: EV charging');
+      return filtered.length > 0 ? filtered : results;
+    }
+    
+    // Disabled access
+    if (lowerQuery.includes('disabled') || lowerQuery.includes('accessible') || lowerQuery.includes('wheelchair')) {
+      filtered = results.filter(p => p.features && p.features.disabled_access);
+      console.log('Filtering by: disabled access');
+      return filtered.length > 0 ? filtered : results;
     }
     
     // Free parking
     if (lowerQuery.includes('free') || lowerQuery.includes('no cost')) {
-      return results.filter(p => p.pricing.hourly === 0);
+      filtered = results.filter(p => p.pricing && p.pricing.hourly === 0);
+      console.log('Filtering by: free parking');
+      return filtered.length > 0 ? filtered : results;
     }
     
+    // If asking "which one" or "which is best", return top 3 sorted by rating
+    if (lowerQuery.includes('which one') || lowerQuery.includes('which is best') || lowerQuery.includes('best one')) {
+      filtered = [...results]
+        .sort((a, b) => {
+          const scoreA = (a.safetyRating?.score || 0) + (a.availability || 0) / 100;
+          const scoreB = (b.safetyRating?.score || 0) + (b.availability || 0) / 100;
+          return scoreB - scoreA;
+        })
+        .slice(0, 3);
+      console.log('🏆 Filtering by: best overall');
+      return filtered;
+    }
+    
+    // Budget filtering if mentioned price range
+    const priceMatch = query.match(/\$(\d+)|\b(\d+)\s*(?:dollar|bucks?|\/hr)/i);
+    if (priceMatch) {
+      const maxPrice = parseInt(priceMatch[1] || priceMatch[2]);
+      filtered = results.filter(p => p.pricing && p.pricing.hourly <= maxPrice);
+      console.log(`Filtering by: max price $${maxPrice}`);
+      return filtered.length > 0 ? filtered : results;
+    }
+    
+    console.log('No specific filter matched, returning all results');
     return results; // Return all if no specific filter matches
   }
 

@@ -6,6 +6,7 @@ const config = require('./config/config');
 const parkingRoutes = require('./routes/parkingRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const authRoutes = require('./routes/authRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 app.use('/api/parking', parkingRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

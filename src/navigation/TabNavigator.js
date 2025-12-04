@@ -10,6 +10,7 @@ import MapScreen from '../screens/MapScreen';
 import ListScreen from '../screens/ListScreen';
 import AIAssistantScreen from '../screens/AIAssistantScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import BookingsScreen from '../screens/BookingsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,6 +32,8 @@ const TabNavigator = () => {
             iconName = focused ? 'sparkles' : 'sparkles-outline';
           } else if (route.name === 'Favorites') {
             iconName = focused ? 'heart' : 'heart-outline';
+          } else if (route.name === 'Bookings') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -86,6 +89,13 @@ const TabNavigator = () => {
         component={FavoritesScreen}
         options={{
           headerTitle: 'My Favorites',
+        }}
+      />
+      <Tab.Screen 
+        name="Bookings" 
+        component={BookingsScreen}
+        options={{
+          headerTitle: 'My Bookings',
         }}
       />
     </Tab.Navigator>

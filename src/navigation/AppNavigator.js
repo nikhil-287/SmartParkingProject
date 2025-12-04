@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import DetailsScreen from '../screens/DetailsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import BookingScreen from '../screens/BookingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import { useSelector, useDispatch } from 'react-redux';
@@ -47,6 +48,11 @@ const AppNavigator = () => {
               name="Details" 
               component={DetailsScreen}
               options={{ headerShown: true, headerTitle: 'Parking Details', headerBackTitle: 'Back' }}
+            />
+            <Stack.Screen 
+              name="Booking" 
+              component={BookingScreen}
+              options={{ headerShown: true, headerTitle: 'Reserve Parking', headerBackTitle: 'Back' }}
             />
             <Stack.Screen 
               name="Profile" 

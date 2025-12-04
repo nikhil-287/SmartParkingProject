@@ -23,6 +23,22 @@ class AuthService {
       throw new Error(error.response?.data?.message || 'Failed to sync profile');
     }
   }
+
+  async registerProfileWithData(accessToken, { firstName, familyName, phone, fullName }) {
+    try {
+      const response = await axios.post(`${API_URL}/register-profile`, {
+        accessToken,
+        firstName,
+        familyName,
+        phone,
+        fullName,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Register profile error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to register profile');
+    }
+  }
 }
 
 export default new AuthService();
