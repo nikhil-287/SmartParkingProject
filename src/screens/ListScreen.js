@@ -14,7 +14,7 @@ import { colors, spacing } from '../constants/theme';
 import SearchBar from '../components/SearchBar';
 import ParkingCard from '../components/ParkingCard';
 import FilterPanel from '../components/FilterPanel';
-import { searchParking, searchByAddress, searchByBbox } from '../store/slices/parkingSlice';
+import { searchParking, searchByAddress, searchByBbox, filterParking, setFilters } from '../store/slices/parkingSlice';
 import { addFavorite, removeFavorite, addRecentSearch } from '../store/slices/userSlice';
 import locationService from '../services/locationService';
 import parkingService from '../services/parkingService';
@@ -162,7 +162,10 @@ const ListScreen = ({ navigation }) => {
         onClose={() => setFilterVisible(false)}
         filters={{}}
         onApplyFilters={(filters) => {
-          console.log('Filters applied:', filters);
+          // Save filters to redux and apply them
+          dispatch(setFilters(filters));
+          dispatch(filterParking({ results: spotsWithDistance, filters }));
+          setFilterVisible(false);
         }}
       />
     </SafeAreaView>

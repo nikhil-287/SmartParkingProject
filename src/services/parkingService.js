@@ -122,7 +122,9 @@ class ParkingService {
         longitude: item.coordinates.longitude,
       },
       // Map availability field (backend uses different field names)
-      availability: item.availability || item.availableSpots || 0,
+      availability: item.availability || (item.availableSpots && item.capacity ? Math.round((item.availableSpots / item.capacity) * 100) : 0),
+      // Keep raw availableSpots so DetailsScreen can show the exact number
+      availableSpots: item.availableSpots || item.available || 0,
       capacity: item.capacity || 0,
       // Ensure pricing structure is consistent
       pricing: {
@@ -131,21 +133,21 @@ class ParkingService {
         monthly: parseFloat(item.pricing?.monthly || 0),
         currency: item.pricing?.currency || 'USD',
       },
-      // Map features (handle both naming conventions)
+      // Map features using the keys the UI expects (also preserve common variants)
       features: {
         covered: item.features?.covered || false,
         security: item.features?.security || false,
-        evCharging: item.features?.ev_charging || item.features?.evCharging || false,
-        disabledAccess: item.features?.disabled_access || item.features?.disabledAccess || false,
+        ev_charging: item.features?.ev_charging || item.features?.evCharging || false,
+        disabled_access: item.features?.disabled_access || item.features?.disabledAccess || false,
         '24hour': item.features?.['24hour'] || false,
-        bikePark: item.features?.bike_parking || item.features?.bikePark || false,
+        bike_parking: item.features?.bike_parking || item.features?.bikePark || false,
       },
       safetyRating: {
         score: parseFloat(item.safetyRating?.score || 3.5),
         reviews: item.safetyRating?.reviews || 0,
         lighting: item.safetyRating?.lighting || false,
-        cameras: item.safetyRating?.security_cameras || item.safetyRating?.cameras || false,
-        patrol: item.safetyRating?.security_patrol || item.safetyRating?.patrol || false,
+        security_cameras: item.safetyRating?.security_cameras || item.safetyRating?.cameras || false,
+        security_patrol: item.safetyRating?.security_patrol || item.safetyRating?.patrol || false,
       },
       type: item.type || 'surface',
       access: item.access || 'public',

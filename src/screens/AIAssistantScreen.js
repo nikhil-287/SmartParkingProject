@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '../constants/theme';
 import { processAIQuery, getSuggestions } from '../store/slices/aiSlice';
+import { setParkingResults } from '../store/slices/parkingSlice';
 import ParkingCard from '../components/ParkingCard';
 import { addFavorite, removeFavorite } from '../store/slices/userSlice';
 import aiService from '../services/aiService';
@@ -30,6 +31,14 @@ const AIAssistantScreen = ({ navigation }) => {
   useEffect(() => {
     dispatch(getSuggestions());
   }, []);
+
+  // Clear input when response is received (loading becomes false after being true)
+  useEffect(() => {
+    if (!loading && inputText.trim()) {
+      // Response just completed, clear the input field
+      setInputText('');
+    }
+  }, [loading]);
 
   const handleNewConversation = () => {
     Alert.alert(
@@ -53,11 +62,14 @@ const AIAssistantScreen = ({ navigation }) => {
   const handleSend = () => {
     if (!inputText.trim()) return;
     
+    // Dispatch query but keep input visible while loading
     dispatch(processAIQuery(inputText));
-    setInputText('');
   };
 
   const handleSuggestionPress = (suggestion) => {
+    // Set the suggestion in the input field
+    setInputText(suggestion);
+    // Dispatch the query
     dispatch(processAIQuery(suggestion));
   };
 
@@ -103,7 +115,14 @@ const AIAssistantScreen = ({ navigation }) => {
               />
             ))}
             {item.results.length > 3 && (
-              <TouchableOpacity style={styles.viewAllButton}>
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={() => {
+                  // Load AI results into the main List screen and navigate there
+                  dispatch(setParkingResults(item.results));
+                  navigation.navigate('List');
+                }}
+              >
                 <Text style={styles.viewAllText}>
                   View all {item.results.length} results
                 </Text>

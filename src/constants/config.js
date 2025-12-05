@@ -1,5 +1,12 @@
 // API Configuration
-export const BACKEND_URL = 'http://10.0.0.226:3000';
+export const BACKEND_URL = 'http://url:3000';
+
+// Google OAuth / OIDC client id for Expo app
+// Replace with your actual Web/Android/iOS client id
+export const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+// Supabase client settings (replace with your project values)
+export const SUPABASE_URL = 'SET_YOUR_SUPABASE_URL_HERE';
+export const SUPABASE_ANON_KEY = 'SET_YOUR_SUPABASE_ANON_KEY_HERE';
 
 // Default search settings
 export const DEFAULT_RADIUS = 5000; // meters

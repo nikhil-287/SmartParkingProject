@@ -4,9 +4,14 @@ import aiService from '../../services/aiService';
 // Async thunks
 export const processAIQuery = createAsyncThunk(
   'ai/processQuery',
-  async (query, { rejectWithValue }) => {
+  async (query, { getState, rejectWithValue }) => {
     try {
-      const data = await aiService.processQuery(query);
+      // Get current chat history from state to pass as context
+      const state = getState();
+      const chatHistory = state.ai.chatHistory;
+      
+      // Call service with both query and chat history
+      const data = await aiService.processQuery(query, chatHistory);
       return data;
     } catch (error) {
       return rejectWithValue(error.message);

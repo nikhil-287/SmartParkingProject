@@ -207,6 +207,22 @@ const DetailsScreen = ({ route, navigation }) => {
       </ScrollView>
 
       <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.bookButton}
+          onPress={() =>
+            navigation.navigate('Booking', {
+              api_parking_id: parking.id,
+              parking_name: parking.name,
+              latitude: parking.coordinates.latitude,
+              longitude: parking.coordinates.longitude,
+              address: parking.address,
+              price_per_hour: parking.pricing.hourly,
+            })
+          }
+        >
+          <Ionicons name="calendar" size={22} color={colors.background} />
+          <Text style={styles.bookText}>Book a Spot</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.directionsButton} onPress={openMaps}>
           <Ionicons name="navigate" size={22} color={colors.background} />
           <Text style={styles.directionsText}>Get Directions</Text>
@@ -427,6 +443,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    gap: spacing.medium,
+  },
+  bookButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.small,
+    backgroundColor: colors.success,
+    padding: spacing.medium,
+    borderRadius: borderRadius.large,
+  },
+  bookText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.background,
   },
   directionsButton: {
     flexDirection: 'row',

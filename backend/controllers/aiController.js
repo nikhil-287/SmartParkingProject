@@ -37,6 +37,9 @@ class AIController {
           context
         );
 
+        // Log what filtering was done
+        console.log(`Follow-up filtered: ${context.lastResults.length} → ${followUpResponse.results.length} results`);
+
         // Update context with the new interaction
         if (sessionId) {
           aiService.setConversationContext(sessionId, {

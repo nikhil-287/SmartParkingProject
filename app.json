@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "SmartParkingProject",
+    "owner": "ksbhat",
     "slug": "SmartParkingProject",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,6 +27,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

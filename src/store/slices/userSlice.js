@@ -6,6 +6,12 @@ const initialState = {
   searchHistory: [],
   recentSearches: [],
   userLocation: null,
+  // Authentication
+  isAuthenticated: false,
+  user: null,
+  // transient UI messages
+  welcomeMessage: null,
+
   preferences: {
     defaultRadius: 5000,
     defaultSortBy: 'distance',
@@ -52,8 +58,23 @@ const userSlice = createSlice({
     setUserLocation: (state, action) => {
       state.userLocation = action.payload;
     },
+    setWelcomeMessage: (state, action) => {
+      state.welcomeMessage = action.payload;
+    },
+    clearWelcomeMessage: (state) => {
+      state.welcomeMessage = null;
+    },
     updatePreferences: (state, action) => {
       state.preferences = { ...state.preferences, ...action.payload };
+    },
+    // Auth reducers
+    setAuthUser: (state, action) => {
+      state.isAuthenticated = true;
+      state.user = action.payload;
+    },
+    logout: (state) => {
+      state.isAuthenticated = false;
+      state.user = null;
     },
     loadPersistedData: (state, action) => {
       return { ...state, ...action.payload };
@@ -69,8 +90,15 @@ export const {
   clearSearchHistory,
   setUserLocation,
   updatePreferences,
+  setAuthUser,
+  setWelcomeMessage,
+  clearWelcomeMessage,
+  logout,
   loadPersistedData,
 } = userSlice.actions;
+
+// Alias for logout
+export const clearAuthUser = logout;
 
 // Async actions for persistence
 export const persistFavorites = () => async (dispatch, getState) => {
